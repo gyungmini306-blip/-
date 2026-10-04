@@ -7,7 +7,15 @@ let type  = [], startX = [];
 let px, py;
 let score = 0;
 let gameOver = false;
+let gameStarted = false;
 let playerSize = 25;
+
+let bx = [], by = [];
+let bulletSize = 8;
+let bulletSpeed = 8;
+let shootTimer = 0;
+let shootInterval = 10; 
+let destroyScore = 0;
 
 function setup() {
   createCanvas(500, 500);
@@ -32,25 +40,65 @@ function setup() {
 function draw() {
   background(10, 10, 30);
 
+  if (!gameStarted) {
+    fill(255);
+    textAlign(CENTER);
+    textSize(24);
+    text("클릭하면 시작!", width / 2, height / 2 - 30);
+    textSize(16);
+    text("WASD : 이동 / Shift : 집중 회피", width / 2, height / 2 + 10);
+    text("Space : 연사 / R : 재시작", width / 2, height / 2 + 40);
+    return;
+  }
+
   if (!gameOver) {
 
     PlayerMove();                
 
-    fill(100, 200, 255);
+    let playerColor = color(100, 200, 255);
+    if (keyIsPressed && keyIsDown(SHIFT)) {
+      playerColor = color(255, 200, 50);
+    }
+    fill(playerColor);
     ellipse(px, py, playerSize, playerSize);
 
     for (let i = 0; i < n; i++) {
-      MeteorMove(i);              
-      if (CheckHit(i))            
-        gameOver = true;
+      MeteorMove(i);
     }
 
+    Shoot();
+    BulletMove();
+    BulletHit();
+
+    for (let i = 0; i < n; i++) {
+      fill(150);
+      ellipse(mx[i], my[i], size[i], size[i]);
+      if (CheckHit(i)) {
+        gameOver = true;
+      }
+    }
+
+    fill(color(255, 230, 80));
+    for (let i = 0; i < bx.length; i++) {
+      ellipse(bx[i], by[i], bulletSize, bulletSize);
+    }
     score++;
 
     fill(255);
     textSize(18);
+    textAlign(LEFT);
+    text("생존 점수 : " + score, 15, 25);
+    textAlign(RIGHT);
+    text("파괴 점수 : " + destroyScore, width - 15, 25);
+
     textAlign(CENTER);
-    text("Score : " + score, 50, 25);
+    textSize(14);
+    if (keyIsPressed && keyIsDown(SHIFT)) {
+      fill(color(255, 200, 50));
+      text("집중 회피 중", width / 2, height - 15);
+    } else {
+      text("Shift : 집중 회피 / Space : 연사", width / 2, height - 15);
+    }
   }
 
   else {
@@ -107,9 +155,6 @@ function MeteorMove(i) {
     mx[i] += random(-1.5, 1.5);
   }
 
-  fill(150);
-  ellipse(mx[i], my[i], size[i], size[i]);
-
   if (my[i] > height + 30) {
     mx[i] = random(width);
     my[i] = random(-150, 0);
@@ -120,7 +165,7 @@ function MeteorMove(i) {
 }
 
 function PlayerSpeed() {
-  if (keyIsDown(SHIFT))
+  if (keyIsPressed && keyIsDown(SHIFT))
     return 2;
   return 4;
 }
@@ -137,10 +182,16 @@ function CheckHit(i) {
 
 function keyPressed() {
 
+  if (key == ' ') return false;
+
   if (key == 'r' || key == 'R') {
 
     gameOver = false;
     score = 0;
+    destroyScore = 0;
+    bx = [];
+    by = [];
+    shootTimer = 0;
 
     px = width / 2;
     py = height * 0.8;
@@ -150,6 +201,59 @@ function keyPressed() {
       startX[i] = mx[i];
 
       my[i] = random(-500, 0);
+      speed[i] = random(2, 4);
+    }
+  }
+}
+
+function mousePressed() {
+  if (mouseButton == LEFT && mouseX >= 0 && mouseX < width &&
+      mouseY >= 0 && mouseY < height) {
+    gameStarted = true;
+  }
+}
+
+function Shoot() {
+  if (!gameStarted || gameOver) return;
+
+  if (shootTimer > 0) {
+    shootTimer--;
+  }
+
+  if (keyIsPressed && keyIsDown(32) && shootTimer == 0) {
+    bx.push(px);
+    by.push(py - playerSize / 2);
+    shootTimer = shootInterval;
+  }
+}
+
+function BulletMove() {
+  for (let i = bx.length - 1; i >= 0; i--) {
+    by[i] -= bulletSpeed;
+
+    if (by[i] < -bulletSize / 2) {
+      bx.splice(i, 1);
+      by.splice(i, 1);
+    }
+  }
+}
+
+function BulletHit() {
+  for (let b = bx.length - 1; b >= 0; b--) {
+    for (let i = 0; i < n; i++) {
+      let d = dist(bx[b], by[b], mx[i], my[i]);
+
+      if (d < bulletSize / 2 + size[i] / 2) {
+        bx.splice(b, 1);
+        by.splice(b, 1);
+        destroyScore += 100;
+
+        mx[i] = random(width);
+        startX[i] = mx[i];
+        my[i] = random(-500, -50);
+        speed[i] = random(2, 4);
+        break; 
+      }
     }
   }
 }
