@@ -20,7 +20,7 @@ function setup() {
     mx[i] = random(width);
     my[i] = random(-500, 0);
 
-    speed[i] = random(4, 6);
+    speed[i] = random(2, 4);
     size[i] = random(15, 30);
 
     type[i] = int(random(0, 3));
@@ -57,10 +57,10 @@ function draw() {
     fill(255, 0, 0);
     textAlign(CENTER);
     textSize(35);
-    text("GAME OVER", 250, 230);
+    text("GAME OVER", width/2, (height/2)-20);
 
     textSize(18);
-    text("R : Restart", 250, 270);
+    text("R : Restart", width/2, (height/2)+20);
   }
 }
 
@@ -68,10 +68,15 @@ function PlayerMove() {
 
   let s = PlayerSpeed();
 
-  if (keyIsDown(65)) px -= s;    // A
-  if (keyIsDown(68)) px += s;    // D
-  if (keyIsDown(87)) py -= s;    // W
-  if (keyIsDown(83)) py += s;    // S
+  let A = 65;
+  let D = 68;
+  let W = 87;
+  let S = 83;
+
+  if (keyIsDown(A)) px -= s;
+  if (keyIsDown(D)) px += s;
+  if (keyIsDown(W)) py -= s;
+  if (keyIsDown(S)) py += s;
 
   if (px < playerSize / 2)
     px = playerSize / 2;
@@ -93,7 +98,7 @@ function MeteorMove(i) {
   else if (type[i] == 1) {
     my[i] += speed[i];
 
-    mx[i] = startX[i] + sin(frameCount * 0.05 + i) * 30;
+    mx[i] = startX[i] + sin(frameCount * 0.05 + i) * 40;
   }
 
   else {
@@ -107,9 +112,9 @@ function MeteorMove(i) {
 
   if (my[i] > height + 30) {
     mx[i] = random(width);
+    my[i] = random(-150, 0);
     startX[i] = mx[i];
 
-    my[i] = random(-150, 0);
     speed[i] = random(2, 4);
   }
 }
